@@ -9,9 +9,7 @@ use actix_web::{
     HttpRequest,
     HttpResponse,
     HttpServer,
-    Error,
     dev::{
-        ServiceRequest,
         ServiceResponse,
     }
 };
@@ -24,20 +22,8 @@ use tokio_postgres::{
     Client,
     NoTls
 };
-use actix_service::{
-    Service,
-    Transform
-};
-use futures::{
-    Future,
-    future::{
-        ok,
-        Ready
-    }
-};
-use std::task::{
-    Context,
-    Poll
+use futures::future::{
+    Ready
 };
 use actix_files::NamedFile;
 use rand::seq::SliceRandom;
