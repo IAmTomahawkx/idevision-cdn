@@ -11,33 +11,34 @@ pub fn gen_tmp_name(filetype: &str) -> String {
 }
 
 pub async fn img_to_webp(img: &str, target: &String) {
-    println!("{:}", Command::new("magick")
+    Command::new("magick")
         .arg("convert")
         .arg(img)
         .arg(("./data/".to_owned() + &target.to_owned()+ &".webp".to_owned()).as_str())
         .status()
-        .expect("failed to convert"));
+        .expect("failed to convert");
+
     fs::remove_file(img).await.expect("failed to remove the tmp file");
 }
 
 pub async fn webp_to_jpg(target: &str, size: (i32, i32)) -> String {
     let tmp_file = format!("./cache/{}@{}x{}.jpg", target, size.0, size.1);
     if size == (-1, -1) {
-        println!("{:}", std::process::Command::new("magick")
+        std::process::Command::new("magick")
             .arg("convert")
             .arg(format!("./data/{}", target))
             .arg("jpg:".to_owned() + &tmp_file)
             .status()
-            .expect("a"));
+            .expect("a");
     } else {
-        println!("{:}", std::process::Command::new("magick")
+        std::process::Command::new("magick")
             .arg("convert")
             .arg(format!("./data/{}", target))
             .arg("-resize")
             .arg(format!("{}x{}", size.0, size.1))
             .arg("jpg:".to_owned() + &tmp_file)
             .status()
-            .expect("a"));
+            .expect("a");
     }
 
     tmp_file
@@ -46,21 +47,21 @@ pub async fn webp_to_jpg(target: &str, size: (i32, i32)) -> String {
 pub async fn webp_to_png(target: &str, size: (i32, i32)) -> String {
     let tmp_file = format!("./cache/{}@{}x{}.png", target, size.0, size.1);
     if size == (-1, -1) {
-        println!("{:}", std::process::Command::new("magick")
+        std::process::Command::new("magick")
             .arg("convert")
             .arg(format!("./data/{}", target))
             .arg("png:".to_owned() + &tmp_file)
             .status()
-            .expect("a"));
+            .expect("a");
     } else {
-        println!("{:}", std::process::Command::new("magick")
+        std::process::Command::new("magick")
             .arg("convert")
             .arg(format!("./data/{}", target))
             .arg("-resize")
             .arg(format!("{}x{}", size.0, size.1))
             .arg("png:".to_owned() + &tmp_file)
             .status()
-            .expect("a"));
+            .expect("a");
     }
 
     tmp_file
@@ -69,21 +70,21 @@ pub async fn webp_to_png(target: &str, size: (i32, i32)) -> String {
 pub async fn webp_to_svg(target: &str, size: (i32, i32)) -> String {
     let tmp_file = format!("./cache/{}@{}x{}.svg", target, size.0, size.1);
     if size == (-1, -1) {
-        println!("{:}", std::process::Command::new("magick")
+        std::process::Command::new("magick")
             .arg("convert")
             .arg(format!("./data/{}", target))
             .arg("svg:".to_owned() + &tmp_file)
             .status()
-            .expect("a"));
+            .expect("a");
     } else {
-        println!("{:}", std::process::Command::new("magick")
+        std::process::Command::new("magick")
             .arg("convert")
             .arg(format!("./data/{}", target))
             .arg("-resize")
             .arg(format!("{}x{}", size.0, size.1))
             .arg("svg:".to_owned() + &tmp_file)
             .status()
-            .expect("a"));
+            .expect("a");
     }
 
     tmp_file
@@ -94,14 +95,14 @@ fn as_is(target: &str, size: (i32, i32)) -> String {
         format!("./data/{}", target).to_string()
     } else {
         let tmp_file = format!("./cache/{}@{}x{}", target, size.0, size.1);
-        println!("{:}", std::process::Command::new("magick")
+        std::process::Command::new("magick")
             .arg("convert")
             .arg(format!("./data/{}", target))
             .arg("-resize")
             .arg(format!("{}x{}", size.0, size.1))
             .arg(&tmp_file)
             .status()
-            .expect("a"));
+            .expect("a");
         tmp_file
     }
 }

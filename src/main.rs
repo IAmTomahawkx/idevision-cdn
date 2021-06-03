@@ -9,9 +9,6 @@ use actix_web::{
     HttpRequest,
     HttpResponse,
     HttpServer,
-    dev::{
-        ServiceResponse,
-    }
 };
 use json::{
     parse,
@@ -22,21 +19,24 @@ use tokio_postgres::{
     Client,
     NoTls
 };
-use futures::future::{
-    Ready
-};
 use actix_files::NamedFile;
 use rand::seq::SliceRandom;
 use qstring::QString;
 use lazy_static::lazy_static;
 use std::{
     collections::HashMap,
-    sync::Arc
+    sync::Arc,
+    time::Duration
 };
 use errors::Errors;
-use tokio::fs;
-use tokio::io::AsyncWriteExt;
-use tokio::stream::StreamExt;
+use tokio::{
+    fs,
+    task,
+    time,
+    sync::Mutex,
+    io::AsyncWriteExt,
+    stream::StreamExt
+};
 
 mod imaging;
 mod errors;
@@ -47,7 +47,7 @@ lazy_static!(
         .unwrap()
     )
     .unwrap();
-    static ref FS_LOCK: Arc<bool> = Arc::new(false);
+    static ref HOLD_LOCK: Arc<Mutex<bool>> = Arc::new(Mutex::new(false));
 );
 
 async fn get_client() -> Client {
@@ -94,11 +94,32 @@ fn convert_size_query(query: Query<HashMap<String, String>>) -> Result<(i32, i32
 }
 
 #[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    let _t = fs::create_dir("temp").await.is_ok();
-    let _t = fs::create_dir("cache").await.is_ok();
-
+#[allow(unused_must_use)]
+async fn main() {
+    if fs::create_dir("temp").await.is_err() {
+        assert_eq!(fs::remove_dir_all("temp").await.is_ok(), true);
+        assert_eq!(fs::create_dir("temp").await.is_ok(), true);
+    }
+    if fs::create_dir("cache").await.is_err() {
+        assert_eq!(fs::remove_dir_all("cache").await.is_ok(), true);
+        assert_eq!(fs::create_dir("cache").await.is_ok(), true);
+    }
     std::env::set_var("RUST_LOG", "actix_web=debug");
+    let lock: Arc<Mutex<bool>> = Arc::clone(&HOLD_LOCK);
+
+    task::spawn(async move {
+        loop {
+            time::delay_for(Duration::new(86400, 0)).await;
+            //time::delay_for(Duration::new(10, 0)).await;
+            let acquired = lock.lock().await;
+            while Arc::strong_count(&HOLD_LOCK) > 2 {
+                time::delay_for(Duration::new(0, 500)).await;
+            }
+            fs::remove_dir_all("./cache").await.unwrap();
+            fs::create_dir("./cache").await.unwrap();
+            drop(acquired);
+        }
+    });
 
     HttpServer::new(|| {
         App::new()
@@ -110,10 +131,12 @@ async fn main() -> std::io::Result<()> {
             )
             .service(make_img)
             .service(get_img)
-    }).bind("127.0.0.1:8080")?
+    }).bind("127.0.0.1:8080")
+        .unwrap()
         .keep_alive(75)
         .run()
         .await
+        .unwrap();
 }
 
 #[get("/{node}/{image:[^.]+}.{ext}")]
@@ -124,13 +147,16 @@ async fn get_img(req: HttpRequest, path: web::Path<(String, String, String)>) ->
         .unwrap_or(Query(HashMap::new()));
     let size: (i32, i32) = convert_size_query(query)?;
 
-    println!("{:?}/{:?}", image, ext);
     if node.ne(&CONFIG["name"].to_string()) {
         return Err(Errors::BadNode { requested_node: node, this_node: CONFIG["name"].to_string() })
     }
     let mut dirlist = std::fs::read_dir("./data").unwrap();
     let as_img = image.clone() + ".webp";
     let direct = image.clone() + &*ext;
+
+    let tlock = Arc::clone(&HOLD_LOCK);
+    let lock = tlock.lock().await;
+    drop(lock);
 
     let exists = dirlist.find(|p|
         (direct.eq(&p
