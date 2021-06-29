@@ -1,9 +1,10 @@
 {
     "slave_key": "same key as in the master config",
     "master_site": "idevision.net",
+    "child_site": "cdn.idevision.net",
     "port": 8350,
     "db": "postgres://name:pass@ip:port/db",
-    "name": null,
-    "_comment_name": "the node name can be left blank to be auto-assigned. Otherwise put a string with a unique name",
-    "migration": false
+    "name": "mynode",
+    "migration": false,
+    "raft_propagation": ["cdn-1.idevision.net"]
 }

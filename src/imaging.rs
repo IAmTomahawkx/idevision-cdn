@@ -1,14 +1,5 @@
 use std::process::Command;
 use tokio::fs;
-use rand::random;
-
-pub fn gen_tmp_name(filetype: &str) -> String {
-    let mut tmp_name = "./temp/".to_string();
-    let tmp_file: String = (0..10).map(|_| (0x20u8 + (random::<f32>() * 96.0) as u8) as char).collect();
-    tmp_name.push_str(&tmp_file);
-    tmp_name.push_str(&*format!(".{}", filetype));
-    tmp_name
-}
 
 pub async fn img_to_webp(img: &str, target: &String) {
     Command::new("magick")

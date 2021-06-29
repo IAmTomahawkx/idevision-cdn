@@ -50,3 +50,9 @@ impl From<actix_web::error::PayloadError> for Errors {
         Errors::BadRequest { err: err.to_string()}
     }
 }
+
+impl From<std::io::Error> for Errors {
+    fn from(err: std::io::Error) -> Self {
+        Errors::BadRequest { err: err.to_string()}
+    }
+}
