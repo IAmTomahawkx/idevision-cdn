@@ -5,11 +5,13 @@ pub async fn img_to_webp(img: &str, target: &String) {
     Command::new("magick")
         .arg("convert")
         .arg(img)
-        .arg(("./data/".to_owned() + &target.to_owned()+ &".webp".to_owned()).as_str())
+        .arg(("./data/".to_owned() + &target.to_owned() + &".webp".to_owned()).as_str())
         .status()
         .expect("failed to convert");
 
-    fs::remove_file(img).await.expect("failed to remove the tmp file");
+    fs::remove_file(img)
+        .await
+        .expect("failed to remove the tmp file");
 }
 
 pub async fn webp_to_jpg(target: &str, size: (i32, i32)) -> String {
@@ -101,10 +103,10 @@ fn as_is(target: &str, size: (i32, i32)) -> String {
 pub async fn convert_output(filetype: &str, target: &str, size: (i32, i32)) -> String {
     return match filetype {
         "png" => webp_to_png(target, size).await,
-        "jpg"|"jpeg" => webp_to_jpg(target, size).await,
+        "jpg" | "jpeg" => webp_to_jpg(target, size).await,
         "svg" => webp_to_svg(target, size).await,
-        _ => as_is(target, size)
-    }
+        _ => as_is(target, size),
+    };
 }
 
 async fn no_conversion(tmp_file: &str, target: &str) {
@@ -115,6 +117,6 @@ async fn no_conversion(tmp_file: &str, target: &str) {
 pub async fn convert_intake(filetype: &str, tmp_file: &str, target: &str) {
     return match filetype {
         "png" | "jpg" | "jpeg" | "svg" => img_to_webp(&tmp_file, &target.to_string()).await,
-        _ => no_conversion(&tmp_file, &target).await
-    }
+        _ => no_conversion(&tmp_file, &target).await,
+    };
 }
