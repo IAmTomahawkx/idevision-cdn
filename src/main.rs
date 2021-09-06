@@ -13,6 +13,7 @@ use tokio::{fs, io::AsyncWriteExt, stream::StreamExt, sync::Mutex, task, time};
 use tokio_postgres::{connect, Client, NoTls};
 
 mod errors;
+mod image;
 mod imaging;
 
 use errors::Errors;
