@@ -13,7 +13,7 @@ use tokio::{fs, io::AsyncWriteExt, stream::StreamExt, sync::Mutex, task, time};
 use tokio_postgres::{connect, Client, NoTls};
 
 mod errors;
-mod image;
+//mod image;
 mod imaging;
 
 use errors::Errors;
@@ -205,7 +205,7 @@ async fn main() {
             .service(make_img)
             .service(get_img)
     })
-    .bind("127.0.0.1:8080")
+    .bind(format!("127.0.0.1:{}", CONFIG.port))
     .unwrap()
     .keep_alive(75)
     .run()
@@ -232,7 +232,7 @@ async fn get_img(
     }
     let mut dirlist = std::fs::read_dir("./data").unwrap();
     let as_img = image.clone() + ".webp";
-    let direct = image.clone() + &*ext;
+    let direct = image.clone() + "." + &*ext;
 
     let tlock = Arc::clone(&HOLD_LOCK);
     let lock = tlock.lock().await;
@@ -243,15 +243,19 @@ async fn get_img(
     let resp = async move {
         let exists = dirlist
             .find(|p| {
-                direct.eq(&p.as_ref().unwrap().file_name().into_string().unwrap())
-                    | as_img.eq(&p.as_ref().unwrap().file_name().into_string().unwrap())
+                let t = &p.as_ref().unwrap().file_name().into_string().unwrap();
+                direct.eq(t) | as_img.eq(t)
             })
-            .ok_or(Errors::NotFound { img: direct })??;
-        let pth = format!("{}.webp", _image);
-        let out = find_in_cache(pth, _ext, size).await;
+            .ok_or(Errors::NotFound { img: direct.clone() })??;
         Ok::<_, Errors>(
-            actix_files::NamedFile::open(out)
-                .unwrap()
+            actix_files::NamedFile::open(
+                find_in_cache(format!("{}.webp", _image), _ext, size).await
+            )
+                .unwrap_or(
+                    actix_files::NamedFile::open(
+                        find_in_cache(direct, _ext, size).await
+                    ).unwrap()
+                )
                 .set_content_disposition(http::header::ContentDisposition {
                     disposition: http::header::DispositionType::Inline,
                     parameters: vec![],

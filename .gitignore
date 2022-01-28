@@ -1,1 +1,8 @@
 /target
+.idea/
+.vscode/
+cache/
+temp/
+data/
+config.json
+upload.py

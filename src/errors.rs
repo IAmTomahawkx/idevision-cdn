@@ -6,11 +6,11 @@ pub enum Errors {
     #[display(fmt = "You are not authorized to use this route")]
     UnauthorizedRoute,
 
-    #[display(fmt = "You are not authorized to access {}", img)]
-    NoPermission { img: String },
+    //#[display(fmt = "You are not authorized to access {}", img)]
+    //NoPermission { img: String },
 
-    #[display(fmt = "Anonymous caller does not have access to protected {}", img)]
-    AnonymousPermission { img: String },
+    //#[display(fmt = "Anonymous caller does not have access to protected {}", img)]
+    //AnonymousPermission { img: String },
 
     #[display(fmt = "{} cannot be found", img)]
     NotFound { img: String },
@@ -33,6 +33,9 @@ pub enum Errors {
 
     #[display(fmt = "Bad query argument '{}'. {}", query, reason)]
     BadQuery { query: String, reason: String },
+
+    #[display(fmt = "{} is not an image. Could not change its filetype", file)]
+    NotAnImage { file: String }
 }
 
 impl actix_web::error::ResponseError for Errors {
@@ -47,14 +50,13 @@ impl actix_web::error::ResponseError for Errors {
 
     fn status_code(&self) -> StatusCode {
         match self {
-            Errors::AnonymousPermission { .. }
-            | Errors::NoPermission { .. }
-            | Errors::UnauthorizedRoute { .. } => StatusCode::UNAUTHORIZED,
+            //Errors::AnonymousPermission { .. }
+            //| Errors::NoPermission { .. }
+            Errors::UnauthorizedRoute { .. } => StatusCode::UNAUTHORIZED,
             Errors::NotFound { .. } => StatusCode::NOT_FOUND,
-            Errors::BadNode { .. } | Errors::InternalServerError => {
-                StatusCode::INTERNAL_SERVER_ERROR
-            }
+            Errors::BadNode { .. } | Errors::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
             Errors::BadRequest { .. } | Errors::BadQuery { .. } => StatusCode::BAD_REQUEST,
+            Errors::NotAnImage { .. } => StatusCode::BAD_REQUEST
         }
     }
 }
